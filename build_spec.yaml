@@ -1,0 +1,12 @@
+version: 0.1
+component: build
+timeoutInSeconds: 1000
+shell: bash
+steps:
+  - type: Command
+    name: "Read text file from repo"
+    command: |
+      echo "Reading my-file.txt:"
+      ls -l
+      
+      # Optional: Assign content to a shell variable
