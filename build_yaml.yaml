@@ -1,0 +1,18 @@
+version: 0.1
+component: build
+
+# Define variables initialized at the start of the pipeline
+env:
+  variables:
+    MY_FILE_PATH: "config.txt"  # Path to the file you want to read
+
+  # Variables captured during runtime to pass to later stages
+  exportedVariables:
+    - EXTRACTED_VERSION
+
+steps:
+  - type: Command
+    name: "Read File and Export Variable"
+    timeoutInSeconds: 60
+    command: |
+      ls -la
