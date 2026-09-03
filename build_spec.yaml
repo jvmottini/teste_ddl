@@ -12,4 +12,4 @@ steps:
 outputArtifacts:
   - name: GMUD-TESTE # Nome do artefato cadastrado no OCI DevOps
     type: BINARY
-    location: GMUD-1.sql
+    location: ${OCI_PRIMARY_SOURCE_DIR}/GMUD-1.sql
