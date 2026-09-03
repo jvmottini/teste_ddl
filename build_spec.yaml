@@ -45,6 +45,6 @@ steps:
 
 outputArtifacts:
 
-  - name: GMUD-1
+  - name: GMUD-2
     type: BINARY
-    location: ${OCI_PRIMARY_SOURCE_DIR}/GMUD-1.txt
+    location: ${OCI_PRIMARY_SOURCE_DIR}/GMUD-2.txt
