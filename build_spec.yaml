@@ -21,8 +21,17 @@ steps:
     timeoutInSeconds: 300
     command: |
       set +e
-      find ${OCI_PRIMARY_SOURCE_DIR} -iname "*gmud*"
+
+      find "${OCI_PRIMARY_SOURCE_DIR}" -iname "*gmud*"
       ls -la
+
+      echo "========================================"
+      echo "Identificando arquivos alterados"
+      echo "========================================"
+
+      echo "Commit atual:"
+      echo "${OCI_TRIGGER_COMMIT_HASH:-NOT_DEFINED}"
+
       exit 0
 
 outputArtifacts:
