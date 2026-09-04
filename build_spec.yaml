@@ -37,4 +37,4 @@ steps:
 outputArtifacts:
   - name: gmud-sql-file
     type: BINARY
-    location: ${OCI_PRIMARY_SOURCE_DIR}/GMUD-1.sql
+    location: ${OCI_PRIMARY_SOURCE_DIR}/${LAST_ADDED_FILE}
