@@ -7,6 +7,7 @@ failImmediatelyOnError: false
 env:
   exportedVariables:
     - timestamp
+    - LAST_ADDED_FILE
 
 steps:
   - type: Command
