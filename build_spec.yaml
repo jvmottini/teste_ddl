@@ -36,7 +36,7 @@ steps:
       fi
 
       echo "Commit atual:"
-      echo "${OCI_TRIGGER_COMMIT_HASH:-NOT_DEFINED}"
+      export LAST_ADDED_FILE
 
       exit 0
 
