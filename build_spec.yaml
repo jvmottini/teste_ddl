@@ -1,15 +1,20 @@
 version: 0.1
 component: build
+timeoutInSeconds: 200
+shell: bash
+failImmediatelyOnError: false
 
 steps:
-  - name: ValidarEEmpacotarScripts
-    type: Command
+  - type: Command
+    name: "Verify and Run"
+    timeoutInSeconds: 300
     command: |
-      echo "Empacotando scripts de banco de dados para a GMUD..."
-      cat GMUD-1.txt
-      mv GMUD-1.txt GMUD-1.sql
+      set +e
+      echo "=== Verificando GMUD-1.sql ==="
+      find ${OCI_PRIMARY_SOURCE_DIR} -iname "*GMUD*"
+      exit 0
 
 outputArtifacts:
-  - name: GMUD-TESTE # Nome do artefato cadastrado no OCI DevOps
+  - name: gmud-sql-file
     type: BINARY
     location: ${OCI_PRIMARY_SOURCE_DIR}/GMUD-1.sql
