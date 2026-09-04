@@ -23,7 +23,7 @@ steps:
       set +e
 
       find "${OCI_PRIMARY_SOURCE_DIR}" -iname "*gmud*"
-      ls -la
+      ls -ltr
 
       echo "========================================"
       echo "Identificando arquivos alterados"
