@@ -4,14 +4,24 @@ timeoutInSeconds: 200
 shell: bash
 failImmediatelyOnError: false
 
+env:
+  exportedVariables:
+    - timestamp
+
 steps:
+  - type: Command
+    name: "Set timestamp"
+    timeoutInSeconds: 30
+    command: |
+      export timestamp=$(date +%Y%m%d%H%M%S)
+      echo "timestamp=$timestamp"
+
   - type: Command
     name: "Verify and Run"
     timeoutInSeconds: 300
     command: |
       set +e
-      echo "=== Verificando GMUD-1.sql ==="
-      find ${OCI_PRIMARY_SOURCE_DIR} -iname "*GMUD*"
+      find ${OCI_PRIMARY_SOURCE_DIR} -iname "*gmud*"
       exit 0
 
 outputArtifacts:
