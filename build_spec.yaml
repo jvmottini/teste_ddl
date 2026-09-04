@@ -1,13 +1,8 @@
 version: 0.1
 component: build
-timeoutInSeconds: 200
+timeoutInSeconds: 600
 shell: bash
 failImmediatelyOnError: false
-
-env:
-  exportedVariables:
-    - timestamp
-    - LAST_ADDED_FILE
 
 steps:
   - type: Command
@@ -26,10 +21,15 @@ steps:
       find "${OCI_PRIMARY_SOURCE_DIR}" -iname "*gmud*"
       ls -ltr
 
-      # Captura o último arquivo adicionado
+      # Captura e exporta o último arquivo adicionado
       LAST_ADDED_FILE=$(git log -1 --diff-filter=A --name-only --pretty=format:"" | head -n 1)
       echo "Último arquivo adicionado: $LAST_ADDED_FILE"
-      cp "$LAST_ADDED_FILE" "${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql"
+      
+      if [ -n "$LAST_ADDED_FILE" ] && [ -f "$LAST_ADDED_FILE" ]; then
+        cp "$LAST_ADDED_FILE" "${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql"
+      else
+        echo "Aviso: Nenhum arquivo novo encontrado."
+      fi
 
       echo "Commit atual:"
       echo "${OCI_TRIGGER_COMMIT_HASH:-NOT_DEFINED}"
@@ -40,3 +40,7 @@ outputArtifacts:
   - name: gmud-sql-file
     type: BINARY
     location: ${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql
+
+exportedVariables:
+  - timestamp
+  - LAST_ADDED_FILE
