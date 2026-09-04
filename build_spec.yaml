@@ -22,6 +22,7 @@ steps:
     command: |
       set +e
       find ${OCI_PRIMARY_SOURCE_DIR} -iname "*gmud*"
+      ls -la
       exit 0
 
 outputArtifacts:
