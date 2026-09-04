@@ -25,9 +25,9 @@ steps:
       find "${OCI_PRIMARY_SOURCE_DIR}" -iname "*gmud*"
       ls -ltr
 
-      echo "========================================"
-      echo "Identificando arquivos alterados"
-      echo "========================================"
+      # Captura o último arquivo adicionado
+      LAST_ADDED_FILE=$(git log -1 --diff-filter=A --name-only --pretty=format:"" | head -n 1)
+      echo "Último arquivo adicionado: $LAST_ADDED_FILE"
 
       echo "Commit atual:"
       echo "${OCI_TRIGGER_COMMIT_HASH:-NOT_DEFINED}"
