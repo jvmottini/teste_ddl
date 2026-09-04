@@ -4,6 +4,11 @@ timeoutInSeconds: 600
 shell: bash
 failImmediatelyOnError: false
 
+env:
+  exportedVariables:
+    - timestamp
+    - LAST_ADDED_FILE
+
 steps:
   - type: Command
     name: "Set timestamp"
@@ -21,7 +26,6 @@ steps:
       find "${OCI_PRIMARY_SOURCE_DIR}" -iname "*gmud*"
       ls -ltr
 
-      # Captura e exporta o último arquivo adicionado
       LAST_ADDED_FILE=$(git log -1 --diff-filter=A --name-only --pretty=format:"" | head -n 1)
       echo "Último arquivo adicionado: $LAST_ADDED_FILE"
       
@@ -40,7 +44,3 @@ outputArtifacts:
   - name: gmud-sql-file
     type: BINARY
     location: ${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql
-
-exportedVariables:
-  - timestamp
-  - LAST_ADDED_FILE
