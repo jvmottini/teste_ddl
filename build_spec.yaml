@@ -7,7 +7,7 @@ failImmediatelyOnError: false
 env:
   exportedVariables:
     - timestamp
-    - LAST_ADDED_FILE
+    - GMUD_NUMBER
 
 steps:
   - type: Command
@@ -27,16 +27,18 @@ steps:
       ls -ltr
 
       LAST_ADDED_FILE=$(git log -1 --diff-filter=A --name-only --pretty=format:"" | head -n 1)
+
       echo "Último arquivo adicionado: $LAST_ADDED_FILE"
-      
+
       if [ -n "$LAST_ADDED_FILE" ] && [ -f "$LAST_ADDED_FILE" ]; then
         cp "$LAST_ADDED_FILE" "${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql"
       else
         echo "Aviso: Nenhum arquivo novo encontrado."
       fi
 
-      echo "Commit atual:"
-      export LAST_ADDED_FILE
+      GMUD_NUMBER="$LAST_ADDED_FILE"
+
+      echo "Arquivo/GMUD atual: $GMUD_NUMBER"
 
       exit 0
 
