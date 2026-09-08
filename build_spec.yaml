@@ -36,7 +36,7 @@ steps:
         echo "Aviso: Nenhum arquivo novo encontrado."
       fi
 
-      export number="$LAST_ADDED_FILE"
+      export number="1"
 
       echo "Arquivo/GMUD atual: $number"
 
