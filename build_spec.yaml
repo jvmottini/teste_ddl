@@ -36,7 +36,7 @@ steps:
         echo "Aviso: Nenhum arquivo novo encontrado."
       fi
 
-      export GMUD_NUMBER="$LAST_ADDED_FILE"
+      export GMUD_NUMBER=$(basename "$LAST_ADDED_FILE" .sql)
 
       echo "Arquivo/GMUD atual: $GMUD_NUMBER"
 
