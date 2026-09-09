@@ -6,7 +6,7 @@ failImmediatelyOnError: false
 
 env:
   exportedVariables:
-    - timestamp
+    - number
 
 steps:
   - type: Command
@@ -37,7 +37,7 @@ steps:
 
       export number="1"
 
-      echo "Arquivo/GMUD atual: $number"
+      echo "number"="$number"
 
       exit 0
 
