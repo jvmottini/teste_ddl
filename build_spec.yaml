@@ -7,34 +7,62 @@ failImmediatelyOnError: false
 env:
   exportedVariables:
     - number
+    - gmud_type
 
 steps:
   - type: Command
-    name: "Get GMUD number"
+    name: "Get GMUD number and type"
     timeoutInSeconds: 30
     command: |
       set -e
 
-      LAST_ADDED_FILE=$(git log -1 --diff-filter=A --name-only --pretty=format:"" | grep -v '^$' | head -n 1)
+      echo "======================================"
+      echo "Identificando arquivo da GMUD"
+      echo "======================================"
 
-      echo "Último arquivo adicionado: ${LAST_ADDED_FILE}"
+      echo "Commit atual:"
+      git rev-parse HEAD
+
+      echo "Arquivos alterados no commit:"
+      git diff-tree --no-commit-id --name-only -r HEAD
+
+      # Procura o arquivo dentro da estrutura gmud/DDL ou gmud/DML
+      LAST_ADDED_FILE=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -iE '^gmud/(DDL|DML)/' | head -n 1)
+
+      echo "Arquivo GMUD encontrado: ${LAST_ADDED_FILE}"
 
       if [ -z "${LAST_ADDED_FILE}" ]; then
-        echo "ERRO: Não foi possível identificar o arquivo da GMUD."
+        echo "ERRO: Nenhum arquivo encontrado em gmud/DDL ou gmud/DML."
+        exit 1
+      fi
+
+      # Extrai o tipo através da pasta
+      gmud_type=$(echo "${LAST_ADDED_FILE}" | awk -F'/' '{print toupper($2)}')
+
+      if [ "${gmud_type}" != "DDL" ] && [ "${gmud_type}" != "DML" ]; then
+        echo "ERRO: Tipo de GMUD inválido: ${gmud_type}"
         exit 1
       fi
 
       # Extrai somente o número da GMUD
-      number=$(echo "${LAST_ADDED_FILE}" | grep -oE '[0-9]+' | head -n 1)
+      number=$(basename "${LAST_ADDED_FILE}" | grep -oE '[0-9]+' | head -n 1)
 
       if [ -z "${number}" ]; then
         echo "ERRO: Não foi possível identificar o número da GMUD."
+        echo "Arquivo: ${LAST_ADDED_FILE}"
         exit 1
       fi
 
       export number
+      export gmud_type
 
-      echo "Número da GMUD: ${number}"
+      echo "======================================"
+      echo "GMUD identificada com sucesso"
+      echo "======================================"
+      echo "Arquivo : ${LAST_ADDED_FILE}"
+      echo "Número  : ${number}"
+      echo "Tipo    : ${gmud_type}"
+      echo "======================================"
 
   - type: Command
     name: "Verify and Run"
@@ -42,29 +70,48 @@ steps:
     command: |
       set -e
 
+      echo "======================================"
+      echo "Preparando artifact"
+      echo "======================================"
+
       echo "Número da GMUD: ${number}"
+      echo "Tipo da GMUD: ${gmud_type}"
 
-      find "${OCI_PRIMARY_SOURCE_DIR}" -iname "*gmud*"
+      find "${OCI_PRIMARY_SOURCE_DIR}" -iname "*gmud*" -type f
 
-      LAST_ADDED_FILE=$(git log -1 --diff-filter=A --name-only --pretty=format:"" | grep -v '^$' | head -n 1)
+      LAST_ADDED_FILE=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -iE '^gmud/(DDL|DML)/' | head -n 1)
 
-      echo "Último arquivo adicionado: ${LAST_ADDED_FILE}"
+      echo "Arquivo selecionado: ${LAST_ADDED_FILE}"
 
-      if [ -n "${LAST_ADDED_FILE}" ] && [ -f "${OCI_PRIMARY_SOURCE_DIR}/${LAST_ADDED_FILE}" ]; then
-
-        cp "${OCI_PRIMARY_SOURCE_DIR}/${LAST_ADDED_FILE}" \
-           "${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql"
-
-      else
-        echo "ERRO: Nenhum arquivo novo encontrado."
+      if [ -z "${LAST_ADDED_FILE}" ]; then
+        echo "ERRO: Nenhum arquivo GMUD encontrado."
         exit 1
       fi
 
-      echo "Arquivo gerado:"
+      if [ ! -f "${OCI_PRIMARY_SOURCE_DIR}/${LAST_ADDED_FILE}" ]; then
+        echo "ERRO: Arquivo não encontrado:"
+        echo "${OCI_PRIMARY_SOURCE_DIR}/${LAST_ADDED_FILE}"
+        exit 1
+      fi
+
+      cp "${OCI_PRIMARY_SOURCE_DIR}/${LAST_ADDED_FILE}" \
+         "${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql"
+
+      echo "======================================"
+      echo "Artifact gerado"
+      echo "======================================"
+
       ls -lh "${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql"
+
+      echo "Tipo: ${gmud_type}"
+      echo "GMUD: ${number}"
 
       echo "Conteúdo:"
       cat "${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql"
+
+      echo "======================================"
+      echo "Artifact pronto para publicação"
+      echo "======================================"
 
 outputArtifacts:
   - name: gmud-sql-file
