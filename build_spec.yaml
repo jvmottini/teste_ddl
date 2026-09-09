@@ -6,7 +6,7 @@ failImmediatelyOnError: false
 
 env:
   exportedVariables:
-    - number
+    - timestamp
 
 steps:
   - type: Command
