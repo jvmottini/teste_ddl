@@ -35,9 +35,9 @@ steps:
         echo "Aviso: Nenhum arquivo novo encontrado."
       fi
 
-      export number="1"
+      cat "${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql"
 
-      echo "number"="$number"
+      ls -ltr "${OCI_PRIMARY_SOURCE_DIR}"
 
       exit 0
 
