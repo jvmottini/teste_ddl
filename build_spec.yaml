@@ -6,40 +6,65 @@ failImmediatelyOnError: false
 
 env:
   exportedVariables:
-    - timestamp
+    - number
 
 steps:
   - type: Command
-    name: "Set timestamp"
+    name: "Get GMUD number"
     timeoutInSeconds: 30
     command: |
-      export timestamp=$(date +%Y%m%d%H%M%S)
-      echo "timestamp=$timestamp"
+      set -e
+
+      LAST_ADDED_FILE=$(git log -1 --diff-filter=A --name-only --pretty=format:"" | grep -v '^$' | head -n 1)
+
+      echo "Último arquivo adicionado: ${LAST_ADDED_FILE}"
+
+      if [ -z "${LAST_ADDED_FILE}" ]; then
+        echo "ERRO: Não foi possível identificar o arquivo da GMUD."
+        exit 1
+      fi
+
+      # Extrai somente o número da GMUD
+      number=$(echo "${LAST_ADDED_FILE}" | grep -oE '[0-9]+' | head -n 1)
+
+      if [ -z "${number}" ]; then
+        echo "ERRO: Não foi possível identificar o número da GMUD."
+        exit 1
+      fi
+
+      export number
+
+      echo "Número da GMUD: ${number}"
 
   - type: Command
     name: "Verify and Run"
     timeoutInSeconds: 300
     command: |
-      set +e
+      set -e
+
+      echo "Número da GMUD: ${number}"
 
       find "${OCI_PRIMARY_SOURCE_DIR}" -iname "*gmud*"
-      ls -ltr
 
-      LAST_ADDED_FILE=$(git log -1 --diff-filter=A --name-only --pretty=format:"" | head -n 1)
+      LAST_ADDED_FILE=$(git log -1 --diff-filter=A --name-only --pretty=format:"" | grep -v '^$' | head -n 1)
 
-      echo "Último arquivo adicionado: $LAST_ADDED_FILE"
+      echo "Último arquivo adicionado: ${LAST_ADDED_FILE}"
 
-      if [ -n "$LAST_ADDED_FILE" ] && [ -f "$LAST_ADDED_FILE" ]; then
-        cp "$LAST_ADDED_FILE" "${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql"
+      if [ -n "${LAST_ADDED_FILE}" ] && [ -f "${OCI_PRIMARY_SOURCE_DIR}/${LAST_ADDED_FILE}" ]; then
+
+        cp "${OCI_PRIMARY_SOURCE_DIR}/${LAST_ADDED_FILE}" \
+           "${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql"
+
       else
-        echo "Aviso: Nenhum arquivo novo encontrado."
+        echo "ERRO: Nenhum arquivo novo encontrado."
+        exit 1
       fi
 
+      echo "Arquivo gerado:"
+      ls -lh "${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql"
+
+      echo "Conteúdo:"
       cat "${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql"
-
-      ls -ltr "${OCI_PRIMARY_SOURCE_DIR}"
-
-      exit 0
 
 outputArtifacts:
   - name: gmud-sql-file
