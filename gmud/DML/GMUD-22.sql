@@ -1,0 +1,1 @@
+CREATE TABLE TABELA2 (nome varchar2(30);
