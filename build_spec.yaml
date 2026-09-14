@@ -26,7 +26,6 @@ steps:
       echo "Arquivos alterados no commit:"
       git diff-tree --no-commit-id --name-only -r HEAD
 
-      # Procura o arquivo dentro da estrutura gmud/DDL ou gmud/DML
       LAST_ADDED_FILE=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -iE '^gmud/(DDL|DML)/' | head -n 1)
 
       echo "Arquivo GMUD encontrado: ${LAST_ADDED_FILE}"
@@ -36,7 +35,6 @@ steps:
         exit 1
       fi
 
-      # Extrai o tipo através da pasta
       gmud_type=$(echo "${LAST_ADDED_FILE}" | awk -F'/' '{print toupper($2)}')
 
       if [ "${gmud_type}" != "DDL" ] && [ "${gmud_type}" != "DML" ]; then
@@ -44,7 +42,6 @@ steps:
         exit 1
       fi
 
-      # Extrai somente o número da GMUD
       number=$(basename "${LAST_ADDED_FILE}" | grep -oE '[0-9]+' | head -n 1)
 
       if [ -z "${number}" ]; then
@@ -65,7 +62,34 @@ steps:
       echo "======================================"
 
   - type: Command
-    name: "Verify and Run"
+    name: "Validate GMUD Header"
+    timeoutInSeconds: 30
+    command: |
+      set -e
+
+      LAST_ADDED_FILE=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -iE '^gmud/(DDL|DML)/' | head -n 1)
+
+      echo "Validando cabeçalho de metadados do script..."
+
+      if [ "${gmud_type}" == "DDL" ]; then
+        if ! grep -qP '^--\s*OBJECT_TYPE:\s*\S+' "${LAST_ADDED_FILE}"; then
+          echo "ERRO: Script DDL sem cabeçalho '-- OBJECT_TYPE: <TIPO>'."
+          echo "Todo script DDL de GMUD precisa iniciar com:"
+          echo "  -- OBJECT_TYPE: TABLE"
+          echo "  -- OBJECT_NAME: SCHEMA.NOME_OBJETO"
+          exit 1
+        fi
+        if ! grep -qP '^--\s*OBJECT_NAME:\s*\S+' "${LAST_ADDED_FILE}"; then
+          echo "ERRO: Script DDL sem cabeçalho '-- OBJECT_NAME: <SCHEMA.OBJETO>'."
+          exit 1
+        fi
+        echo "Cabeçalho de metadados OK."
+      else
+        echo "Tipo DML — cabeçalho de metadados não obrigatório."
+      fi
+
+  - type: Command
+    name: "Verify and Package Artifact"
     timeoutInSeconds: 300
     command: |
       set -e
@@ -77,16 +101,9 @@ steps:
       echo "Número da GMUD: ${number}"
       echo "Tipo da GMUD: ${gmud_type}"
 
-      find "${OCI_PRIMARY_SOURCE_DIR}" -iname "*gmud*" -type f
-
       LAST_ADDED_FILE=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -iE '^gmud/(DDL|DML)/' | head -n 1)
 
       echo "Arquivo selecionado: ${LAST_ADDED_FILE}"
-
-      if [ -z "${LAST_ADDED_FILE}" ]; then
-        echo "ERRO: Nenhum arquivo GMUD encontrado."
-        exit 1
-      fi
 
       if [ ! -f "${OCI_PRIMARY_SOURCE_DIR}/${LAST_ADDED_FILE}" ]; then
         echo "ERRO: Arquivo não encontrado:"
@@ -100,20 +117,11 @@ steps:
       echo "======================================"
       echo "Artifact gerado"
       echo "======================================"
-
       ls -lh "${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql"
-
       echo "Tipo: ${gmud_type}"
       echo "GMUD: ${number}"
 
-      echo "Conteúdo:"
-      cat "${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql"
-
-      echo "======================================"
-      echo "Artifact pronto para publicação"
-      echo "======================================"
-
 outputArtifacts:
   - name: gmud-sql-file
-    type: BINARY
+    type: GENERIC_ARTIFACT
     location: ${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql
