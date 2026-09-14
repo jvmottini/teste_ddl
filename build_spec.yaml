@@ -123,5 +123,5 @@ steps:
 
 outputArtifacts:
   - name: gmud-sql-file
-    type: GENERIC_ARTIFACT
+    type: BINARY
     location: ${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql
