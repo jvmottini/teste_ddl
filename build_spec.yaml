@@ -23,10 +23,15 @@ steps:
       echo "Commit atual:"
       git rev-parse HEAD
 
-      echo "Arquivos alterados no commit:"
-      git diff-tree --no-commit-id --name-only -r HEAD
+      if [ "$(git rev-parse --is-shallow-repository)" == "true" ]; then
+        echo "Repositório clonado como shallow — buscando histórico adicional..."
+        git fetch --unshallow --no-tags 2>&1 || echo "AVISO: unshallow falhou ou já havia histórico suficiente."
+      fi
 
-      LAST_ADDED_FILE=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -iE '^gmud/(DDL|DML)/' | head -n 1)
+      echo "Arquivos alterados no merge (comparando com HEAD^1):"
+      git diff --name-only HEAD^1 HEAD
+
+      LAST_ADDED_FILE=$(git diff --name-only HEAD^1 HEAD | grep -iE '^gmud/(DDL|DML)/' | head -n 1)
 
       echo "Arquivo GMUD encontrado: ${LAST_ADDED_FILE}"
 
@@ -67,7 +72,7 @@ steps:
     command: |
       set -e
 
-      LAST_ADDED_FILE=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -iE '^gmud/(DDL|DML)/' | head -n 1)
+      LAST_ADDED_FILE=$(git diff --name-only HEAD^1 HEAD | grep -iE '^gmud/(DDL|DML)/' | head -n 1)
 
       echo "Validando cabeçalho de metadados do script..."
 
@@ -101,7 +106,7 @@ steps:
       echo "Número da GMUD: ${number}"
       echo "Tipo da GMUD: ${gmud_type}"
 
-      LAST_ADDED_FILE=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -iE '^gmud/(DDL|DML)/' | head -n 1)
+      LAST_ADDED_FILE=$(git diff --name-only HEAD^1 HEAD | grep -iE '^gmud/(DDL|DML)/' | head -n 1)
 
       echo "Arquivo selecionado: ${LAST_ADDED_FILE}"
 
