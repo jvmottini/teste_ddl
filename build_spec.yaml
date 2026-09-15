@@ -55,6 +55,22 @@ steps:
         exit 1
       fi
 
+      # Checa no histórico se essa GMUD já foi processada antes, ANTES de
+      # seguir pros steps de validação/empacotamento/deliver artifact.
+      if [ -n "${HISTORY_BUCKET}" ]; then
+        if oci os object head \
+            --bucket-name "${HISTORY_BUCKET}" \
+            --name "gmud/history/${number}.json" >/dev/null 2>&1; then
+          echo "ERRO: GMUD ${number} já foi processada anteriormente."
+          echo "Detalhes em: gmud/history/${number}.json (bucket ${HISTORY_BUCKET})"
+          echo "Se isso for intencional (reenvio da mesma GMUD após correção),"
+          echo "apague o objeto do histórico antes de reenviar."
+          exit 1
+        fi
+      else
+        echo "AVISO: HISTORY_BUCKET não definido — sem checagem de GMUDs já processadas."
+      fi
+
       export number
       export gmud_type
 
@@ -125,6 +141,32 @@ steps:
       ls -lh "${OCI_PRIMARY_SOURCE_DIR}/target_gmud.sql"
       echo "Tipo: ${gmud_type}"
       echo "GMUD: ${number}"
+
+  - type: Command
+    name: "Register GMUD History"
+    timeoutInSeconds: 30
+    command: |
+      set -e
+
+      if [ -z "${HISTORY_BUCKET}" ]; then
+        echo "AVISO: HISTORY_BUCKET não definido — histórico não registrado."
+        exit 0
+      fi
+
+      COMMIT_SHA=$(git rev-parse HEAD)
+      TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+      cat > /tmp/history_entry.json <<JSONEOF
+      {"number":"${number}","gmud_type":"${gmud_type}","commit":"${COMMIT_SHA}","registered_at":"${TIMESTAMP}"}
+      JSONEOF
+
+      oci os object put \
+        --bucket-name "${HISTORY_BUCKET}" \
+        --name "gmud/history/${number}.json" \
+        --file /tmp/history_entry.json \
+        --force
+
+      echo "Histórico registrado: gmud/history/${number}.json"
 
 outputArtifacts:
   - name: gmud-sql-file
